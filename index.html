@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Freeform Gradient Generator</title>
+    <script src="gradientgenerator.js"></script>
+    <script>
+        let g;
+        let shouldShowPoints = true;
+        let shouldShowOverlay = true;
+
+        window.addEventListener('load', function () {
+
+            g = new FreeformGradientGenerator('canvas');
+
+            for(let colourPicker of document.querySelectorAll("input[type='color']")) {
+                colourPicker.addEventListener("input", function (e) {
+                    updateGradient();
+                });
+            }
+
+            for(let powerSlider of document.querySelectorAll(".power")) {
+                powerSlider.addEventListener("change", function (e) {
+                    document.getElementById(e.target.dataset.linkedcolour).dataset.power = e.target.value;
+                    updateGradient();
+                });
+            }
+
+            for(let cb of document.querySelectorAll(".enabled")) {
+                cb.addEventListener("click", function (e) {
+                    updateGradient();
+                });
+            }
+
+            for(let radio of document.querySelectorAll(".rect-size-w")) {
+                radio.addEventListener("change", function (e) {
+                    document.getElementById(e.target.dataset.linkedcolour).dataset.w = e.target.value;
+                    updateGradient();
+                });
+            }
+
+            for(let radio of document.querySelectorAll(".rect-size-h")) {
+                radio.addEventListener("change", function (e) {
+                    document.getElementById(e.target.dataset.linkedcolour).dataset.h = e.target.value;
+                    updateGradient();
+                });
+            }
+
+            document.getElementById("file-selector").addEventListener("change", function (e)
+            {
+                if (document.getElementById("file-selector").files.length > 0)
+                {
+                    let file = document.getElementById("file-selector").files[0];
+
+                    if (file.type.indexOf('image') !== -1)
+                    {
+                        const reader = new FileReader();
+                        reader.addEventListener('load', (event) => {
+                            document.getElementById("image-overlay").src = event.target.result;
+                            updateGradient();
+                        });
+                        reader.readAsDataURL(file);
+                    }
+                }
+                else
+                {
+                    updateGradient();
+                }
+            });
+
+            document.getElementById("button_random").addEventListener("click", function (e) {
+                randomColours();
+            });
+
+            document.getElementById("button_reference").addEventListener("click", function (e) {
+                referenceColours();
+            });
+
+            document.getElementById("button_toggle_points").addEventListener("click", function (e) {
+                shouldShowPoints = !shouldShowPoints;
+                updateGradient();
+            });
+
+            document.getElementById("button_toggle_overlay").addEventListener("click", function (e) {
+                shouldShowOverlay = !shouldShowOverlay;
+                updateGradient();
+            });
+
+            document.getElementById("button_clear_overlay").addEventListener("click", function (e) {
+                document.getElementById("image-overlay").src = '';
+                document.getElementById("file-selector").value = null;
+                updateGradient();
+            });
+
+            updateGradient();
+        })
+
+        function updateGradient()
+        {
+            let checkboxesChecked = [];
+            for(let cb of document.querySelectorAll(".enabled")) {
+                if (cb.checked) {
+                    checkboxesChecked.push(cb.value);
+                }
+            }
+
+            let imageElement = document.getElementById("image-overlay");
+
+            if (!imageElement.src || !shouldShowOverlay)
+                imageElement = null;
+
+            g.makeGradient(checkboxesChecked, shouldShowPoints, imageElement);
+        }
+
+        function randomColours() {
+            for (let i=0; i < 5; i++) {
+                if (!document.getElementById("point" + (i+1) + "_rnd_lock").checked)
+                {
+                    let r = Math.floor(Math.random() * 256);
+                    let g = Math.floor(Math.random() * 256);
+                    let b = Math.floor(Math.random() * 256);
+                    document.getElementById("point" + (i+1)).value = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+                }
+            }
+            updateGradient();
+        }
+
+        function referenceColours() {
+            document.getElementById("point1").value = "#ff0000";
+            document.getElementById("point2").value = "#ffff00";
+            document.getElementById("point3").value = "#00ff00";
+            document.getElementById("point4").value = "#0000ff";
+            updateGradient();
+        }
+    </script>
+    <style>
+
+        body {
+            font-family: monospace;
+        }
+
+        #container {
+            display: flex;
+            justify-content: center;
+            margin-top: 5rem;
+        }
+
+        #canvas-container {
+            margin-right: 1rem;
+        }
+
+        #controls {
+            margin-left: 1rem;
+        }
+
+        #image-overlay {
+            display: none;
+        }
+
+        .centred {
+            text-align: center;
+        }
+
+        .mb-1 {
+            margin-bottom: 0.25rem;
+        }
+
+        .mb-2 {
+            margin-bottom: 0.5rem;
+        }
+
+        button {
+            border-radius: 5px;
+            padding: 0.5rem 1rem;
+        }
+
+        body {
+            background-color: #666;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <div id="canvas-container">
+            <canvas id="canvas" width="400" height="400"></canvas>
+            <img id="image-overlay" />
+        </div>
+        <div id="controls">
+            <table class="mb-2">
+                <thead>
+                    <tr>
+                        <th>Rnd Locked</th>
+                        <th>Colour</th>
+                        <th>Enabled</th>
+                        <th>Power</th>
+                        <th>Width</th>
+                        <th>Height</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="centred"><input type="checkbox" class="locked" id="point1_rnd_lock" /></td>
+                        <td><input type="color" value="#ff0000" id="point1" data-x="0.1" data-y="0.1" data-w="0" data-h="0" data-power="1" /></td>
+                        <td class="centred"><input type="checkbox" class="enabled" value="point1" checked="checked" /></td>
+                        <td><input type="range" class="power" min="1" max="2" step="0.1" value="1" data-linkedcolour="point1" /></td>
+                        <td><input type="range" class="rect-size-w" min="0" max="1" step="0.05" value="0" data-linkedcolour="point1" /></td>
+                        <td><input type="range" class="rect-size-h" min="0" max="1" step="0.05" value="0" data-linkedcolour="point1" /></td>
+                    </tr>
+                    <tr>
+                        <td class="centred"><input type="checkbox" class="locked" id="point2_rnd_lock" /></td>
+                        <td><input type="color" value="#ffff00" id="point2" data-x="0.9" data-y="0.1" data-w="0" data-h="0" data-power="1" /></td>
+                        <td class="centred"><input type="checkbox" class="enabled" value="point2" checked="checked" /></td>
+                        <td><input type="range" class="power" min="1" max="2" step="0.1" value="1" data-linkedcolour="point2" /></td>
+                        <td><input type="range" class="rect-size-w" min="0" max="1" step="0.05" value="0" data-linkedcolour="point2" /></td>
+                        <td><input type="range" class="rect-size-h" min="0" max="1" step="0.05" value="0" data-linkedcolour="point2" /></td>
+                    </tr>
+                    <tr>
+                        <td class="centred"><input type="checkbox" class="locked" id="point3_rnd_lock" /></td>
+                        <td><input type="color" value="#00ff00" id="point3" data-x="0.1" data-y="0.9" data-w="0" data-h="0" data-power="1" /></td>
+                        <td class="centred"><input type="checkbox" class="enabled" value="point3" checked="checked" /></td>
+                        <td><input type="range" class="power" min="1" max="2" step="0.1" value="1" data-linkedcolour="point3" /></td>
+                        <td><input type="range" class="rect-size-w" min="0" max="1" step="0.05" value="0" data-linkedcolour="point3" /></td>
+                        <td><input type="range" class="rect-size-h" min="0" max="1" step="0.05" value="0" data-linkedcolour="point3" /></td>
+                    </tr>
+                    <tr>
+                        <td class="centred"><input type="checkbox" class="locked" id="point4_rnd_lock" /></td>
+                        <td><input type="color" value="#0000ff" id="point4" data-x="0.9" data-y="0.9" data-w="0" data-h="0" data-power="1" /></td>
+                        <td class="centred"><input type="checkbox" class="enabled" value="point4" checked="checked" /></td>
+                        <td><input type="range" class="power" min="1" max="2" step="0.1" value="1" data-linkedcolour="point4" /></td>
+                        <td><input type="range" class="rect-size-w" min="0" max="1" step="0.05" value="0" data-linkedcolour="point4" /></td>
+                        <td><input type="range" class="rect-size-h" min="0" max="1" step="0.05" value="0" data-linkedcolour="point4" /></td>
+                    </tr>
+                    <tr>
+                        <td class="centred"><input type="checkbox" class="locked" id="point5_rnd_lock" /></td>
+                        <td><input type="color" value="#ffffff" id="point5" data-x="0.5" data-y="0.5" data-w="0" data-h="0" data-power="1" /></td>
+                        <td class="centred"><input type="checkbox" class="enabled" value="point5" /></td>
+                        <td><input type="range" class="power" min="1" max="2" step="0.1" value="1" data-linkedcolour="point5" /></td>
+                        <td><input type="range" class="rect-size-w" min="0" max="1" step="0.05" value="0" data-linkedcolour="point5" /></td>
+                        <td><input type="range" class="rect-size-h" min="0" max="1" step="0.05" value="0" data-linkedcolour="point5" /></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="mb-2">
+                <label>Overlay File</label>
+                <input type="file" id="file-selector" accept=".svg,.png,.gif" />
+            </div>
+            <div>
+                <button type="button" id="button_toggle_points">Toggle Points</button>
+                <button type="button" id="button_toggle_overlay">Toggle Overlay</button>
+                <button type="button" id="button_random">Random Colours</button>
+                <button type="button" id="button_reference">Reference Colours</button>
+                <button type="button" id="button_clear_overlay">Clear Overlay</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
