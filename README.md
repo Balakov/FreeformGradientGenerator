@@ -6,6 +6,8 @@ This is my attempt to bypass that restriction. It's just interpolating colours, 
 
 Also the UI is awful, please don't judge me on that. It would be really nice to be able to drag the size of rectangular colour points instead of using input sliders, but rectangular colour points aren't actually that useful, so I didn't bother tidying it up.
 
+https://balakov.github.io/FreeformGradientGenerator/
+
 ![Ranger_Preview](/Preview.png)
 
 Click and drag the points on the image to move the colours around.
